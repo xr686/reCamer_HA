@@ -1,15 +1,15 @@
 # reCamer_HA
-You can connect multiple reCamera to HomeAssistant, and after connecting to HA, you can see the video stream from the reCamera, as well as the detection results and quantities.您可以将多个摄像头连接到HomeAssistant，连接到HA后，您可以看到来自摄像头的视频流，以及检测结果和数量。
+You can connect multiple reCamera to HomeAssistant, and after connecting to HA, you can see the video stream from the reCamera, as well as the detection results and quantities.
 您可以将多个 reCamera 连接到 HomeAssistant，连接到 HA 后，您可以查看来自 reCamera 的视频流以及检测结果和数量。
 
 
 ## 📊 Dashboard Configuration📊Dashboard配置
 
-To display the RTSP live stream and real-time YOLO detection details (labels & counts) simultaneously, you can use a **Vertical Stack** card.要同时显示RTSP实时流和实时YOLO检测细节（labels & counts），您可以使用**垂直堆栈**卡片。
+To display the RTSP live stream and real-time YOLO detection details (labels & counts) simultaneously, you can use a **Vertical Stack** card.
 
-1. Go to your Home Assistant Dashboard -> **Edit Dashboard**.1. 进入您的家庭助理仪表盘->； **编辑仪表盘**。
-2. Click **Add Card   添加卡** -> Search for **"Manual"**.2. 点击**添加卡片** ->；搜索**“手动”**。
-3. Copy and paste the YAML code below.3. 复制并粘贴下面的YAML代码。
+1. Go to the dashboard -> Click on **Edit Dashboard** in the top right corner.
+2. Click on **Add Card** in the bottom right corner -> Search and select **"Manual"**.
+3. Copy the following YAML code and paste it.
 4. **Important:** Please replace `YOUR_IP_SUFFIX` in the code with your actual device IP suffix (e.g., `camera.recamera_stream_3`). You can find this information here: HA Panel – Settings – Devices & Services – reCamera AI – x entities – Identifier for the entity corresponding to the reCamera Stream/Detection.
 
 ```yaml  
