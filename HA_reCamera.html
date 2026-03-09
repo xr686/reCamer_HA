@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>reCamera Dashboard Config Generator</title>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: #f0f2f5; color: #333; line-height: 1.6; padding: 20px; max-width: 800px; margin: 0 auto; }
+        .container { background-color: #fff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header { display: flex; justify-content: space-between; align-items: center; border-bottom: 2px solid #f0f2f5; padding-bottom: 15px; margin-bottom: 20px; }
+        h1 { color: #03a9f4; margin: 0; font-size: 1.8em; }
+        .lang-selector { padding: 8px; border-radius: 4px; border: 1px solid #ccc; font-size: 14px; background-color: #fff; cursor: pointer; outline: none; }
+        .lang-selector:focus { border-color: #03a9f4; }
+        .form-group { margin-bottom: 20px; }
+        label { display: block; font-weight: bold; margin-bottom: 5px; color: #555; }
+        input[type="text"] { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; font-family: monospace; font-size: 14px; }
+        input[type="text"]:focus { border-color: #03a9f4; outline: none; box-shadow: 0 0 5px rgba(3, 169, 244, 0.3); }
+        .help-text { font-size: 0.9em; color: #888; margin-top: 5px; }
+        .output-area { background-color: #282c34; color: #abb2bf; padding: 20px; border-radius: 4px; overflow-x: auto; font-family: "Courier New", Courier, monospace; font-size: 14px; white-space: pre-wrap; position: relative; border: 1px solid #1e2227; }
+        .btn-copy { background-color: #03a9f4; color: white; border: none; padding: 12px 24px; border-radius: 4px; cursor: pointer; font-size: 16px; font-weight: bold; margin-top: 15px; display: inline-block; transition: background-color 0.2s; }
+        .btn-copy:hover { background-color: #0288d1; }
+        .btn-copy:active { transform: translateY(1px); }
+        .desc { margin-bottom: 25px; color: #555; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1 id="title">reCamera Dashboard Generator</h1>
+        <select id="langSelect" class="lang-selector" onchange="changeLanguage()">
+            <option value="en">🇺🇸 English</option>
+            <option value="cn">🇨🇳 简体中文</option>
+            <option value="jp">🇯🇵 日本語</option>
+            <option value="es">🇪🇸 Español</option>
+        </select>
+    </div>
+    
+    <p class="desc" id="description">Please enter your device entity IDs found in Home Assistant below. The system will automatically generate error-free configuration code for you.</p>
+
+    <div class="form-group">
+        <label for="cameraId" id="camLabel">📷 Camera Entity ID</label>
+        <input type="text" id="cameraId" placeholder="e.g. camera.recamera_stream_192_168_1_5" oninput="generateYAML()">
+        <div class="help-text" id="camHelp">Go to HA "Developer Tools -> States", search for camera.recamera_stream and paste it here.</div>
+    </div>
+
+    <div class="form-group">
+        <label for="sensorId" id="sensorLabel">📊 Sensor Entity ID</label>
+        <input type="text" id="sensorId" placeholder="e.g. sensor.recamera_detection_192_168_1_5" oninput="generateYAML()">
+        <div class="help-text" id="sensorHelp">Go to HA "Developer Tools -> States", search for sensor.recamera_detection and paste it here.</div>
+    </div>
+
+    <h3 id="outputTitle">Generated YAML Code:</h3>
+    <p style="color: #666; font-size: 0.9em;" id="outputDesc">Please add a "Manual" card in the Home Assistant dashboard and paste the following code:</p>
+    
+    <div class="output-area" id="yamlOutput">Please enter the entity IDs above first...</div>
+    
+    <button class="btn-copy" id="copyBtn" onclick="copyToClipboard()">📋 Copy Configuration Code</button>
+</div>
+
+<script>
+    // --- 国际化语言包 (Internationalization Dictionaries) ---
+    const i18n = {
+        en: {
+            title: "reCamera Dashboard Generator",
+            description: "Please enter your device entity IDs found in Home Assistant below. The system will automatically generate error-free configuration code for you.",
+            camLabel: "📷 Camera Entity ID",
+            camPlaceholder: "e.g. camera.recamera_stream_192_168_1_5",
+            camHelp: 'Go to HA "Developer Tools -> States", search for "camera.recamera_stream" and paste it here.',
+            sensorLabel: "📊 Sensor Entity ID",
+            sensorPlaceholder: "e.g. sensor.recamera_detection_192_168_1_5",
+            sensorHelp: 'Go to HA "Developer Tools -> States", search for "sensor.recamera_detection" and paste it here.',
+            outputTitle: "Generated YAML Code:",
+            outputDesc: 'Please add a "Manual" card in the Home Assistant dashboard and paste the following code:',
+            outputEmpty: "Please enter the entity IDs above first...",
+            copyBtn: "📋 Copy Configuration Code",
+            alertEmpty: "Please enter Entity IDs to generate code before copying!",
+            alertSuccess: "✅ Code copied! Please go to Home Assistant dashboard, add a 'Manual' card, and paste it.",
+            alertFail: "Copy failed, please select and copy the code manually.",
+            // YAML specific translations
+            yamlCamComment: "1. Live Stream Card",
+            yamlCamName: "reCamera Live",
+            yamlSenComment: "2. Data Statistics Card",
+            yamlDetDetails: "📊 Detection Details",
+            yamlTotal: "**Total:**"
+        },
+        cn: {
+            title: "reCamera 仪表盘配置生成器",
+            description: "请在下方填入您在 Home Assistant 中查看到的设备实体 ID，系统将自动为您生成无错的配置代码。",
+            camLabel: "📷 视频流实体 ID (Camera Entity ID)",
+            camPlaceholder: "例如: camera.recamera_stream_192_168_1_5",
+            camHelp: '去 HA 的“开发者工具 -> 状态”中搜索 camera.recamera_stream 复制粘贴到这里。',
+            sensorLabel: "📊 数据统计实体 ID (Sensor Entity ID)",
+            sensorPlaceholder: "例如: sensor.recamera_detection_192_168_1_5",
+            sensorHelp: '去 HA 的“开发者工具 -> 状态”中搜索 sensor.recamera_detection 复制粘贴到这里。',
+            outputTitle: "生成的 YAML 代码：",
+            outputDesc: "请在 Home Assistant 仪表盘中添加一个“手动 (Manual)”卡片，并粘贴以下代码：",
+            outputEmpty: "请先在上方输入实体 ID...",
+            copyBtn: "📋 一键复制配置代码",
+            alertEmpty: "请先输入实体 ID 生成代码后再复制！",
+            alertSuccess: "✅ 代码已复制！请前往 Home Assistant 仪表盘添加“手动 (Manual)”卡片并粘贴。",
+            alertFail: "复制失败，请手动选中代码复制。",
+            // YAML specific translations
+            yamlCamComment: "1. 视频流卡片",
+            yamlCamName: "reCamera 实时监控",
+            yamlSenComment: "2. 数据统计卡片",
+            yamlDetDetails: "📊 检测详情",
+            yamlTotal: "**总数:**"
+        },
+        jp: {
+            title: "reCamera ダッシュボードジェネレーター",
+            description: "Home Assistantで確認したデバイスのエンティティIDを以下に入力してください。エラーのない設定コードが自動的に生成されます。",
+            camLabel: "📷 カメラ エンティティID",
+            camPlaceholder: "例: camera.recamera_stream_192_168_1_5",
+            camHelp: 'HAの「開発者ツール -> 状態」で camera.recamera_stream を検索し、ここに貼り付けてください。',
+            sensorLabel: "📊 センサー エンティティID",
+            sensorPlaceholder: "例: sensor.recamera_detection_192_168_1_5",
+            sensorHelp: 'HAの「開発者ツール -> 状態」で sensor.recamera_detection を検索し、ここに貼り付けてください。',
+            outputTitle: "生成された YAML コード:",
+            outputDesc: "Home Assistantのダッシュボードに「手動 (Manual)」カードを追加し、以下のコードを貼り付けてください：",
+            outputEmpty: "まず、上記のエンティティIDを入力してください...",
+            copyBtn: "📋 設定コードをコピー",
+            alertEmpty: "コピーする前にエンティティIDを入力してください！",
+            alertSuccess: "✅ コードをコピーしました！Home Assistantで「手動」カードを追加して貼り付けてください。",
+            alertFail: "コピーに失敗しました。手動で選択してコピーしてください。",
+            // YAML specific translations
+            yamlCamComment: "1. ビデオストリームカード",
+            yamlCamName: "reCamera ライブ",
+            yamlSenComment: "2. データ統計カード",
+            yamlDetDetails: "📊 検出の詳細",
+            yamlTotal: "**合計:**"
+        },
+        es: {
+            title: "Generador de Panel reCamera",
+            description: "Ingrese a continuación las ID de entidad de su dispositivo en Home Assistant. El sistema generará automáticamente código sin errores.",
+            camLabel: "📷 ID de Entidad de Cámara",
+            camPlaceholder: "ej. camera.recamera_stream_192_168_1_5",
+            camHelp: 'Vaya a "Herramientas para desarrolladores -> Estados" en HA, busque camera.recamera_stream y péguelo aquí.',
+            sensorLabel: "📊 ID de Entidad de Sensor",
+            sensorPlaceholder: "ej. sensor.recamera_detection_192_168_1_5",
+            sensorHelp: 'Vaya a "Herramientas para desarrolladores -> Estados" en HA, busque sensor.recamera_detection y péguelo aquí.',
+            outputTitle: "Código YAML Generado:",
+            outputDesc: 'Agregue una tarjeta "Manual" en el panel de Home Assistant y pegue el siguiente código:',
+            outputEmpty: "Por favor, ingrese primero las ID de entidad arriba...",
+            copyBtn: "📋 Copiar Código de Configuración",
+            alertEmpty: "¡Ingrese las ID de entidad para generar el código antes de copiar!",
+            alertSuccess: "✅ ¡Código copiado! Vaya al panel de Home Assistant, agregue una tarjeta 'Manual' y péguelo.",
+            alertFail: "Error al copiar, seleccione y copie el código manualmente.",
+            // YAML specific translations
+            yamlCamComment: "1. Tarjeta de transmisión en vivo",
+            yamlCamName: "reCamera en Vivo",
+            yamlSenComment: "2. Tarjeta de estadísticas",
+            yamlDetDetails: "📊 Detalles de Detección",
+            yamlTotal: "**Total:**"
+        }
+    };
+
+    let currentLang = 'en';
+
+    function changeLanguage() {
+        currentLang = document.getElementById('langSelect').value;
+        const t = i18n[currentLang];
+
+        // Update UI Text
+        document.getElementById('title').innerText = t.title;
+        document.getElementById('description').innerText = t.description;
+        document.getElementById('camLabel').innerText = t.camLabel;
+        document.getElementById('cameraId').placeholder = t.camPlaceholder;
+        document.getElementById('camHelp').innerText = t.camHelp;
+        document.getElementById('sensorLabel').innerText = t.sensorLabel;
+        document.getElementById('sensorId').placeholder = t.sensorPlaceholder;
+        document.getElementById('sensorHelp').innerText = t.sensorHelp;
+        document.getElementById('outputTitle').innerText = t.outputTitle;
+        document.getElementById('outputDesc').innerText = t.outputDesc;
+        document.getElementById('copyBtn').innerText = t.copyBtn;
+
+        // Re-generate YAML to apply language changes to comments
+        generateYAML();
+    }
+
+    function generateYAML() {
+        const t = i18n[currentLang];
+        const camInput = document.getElementById('cameraId').value.trim();
+        const senInput = document.getElementById('sensorId').value.trim();
+
+        const cameraId = camInput || 'camera.YOUR_CAMERA_ID';
+        const sensorId = senInput || 'sensor.YOUR_SENSOR_ID';
+
+        const yamlTemplate = `type: vertical-stack
+cards:
+  # ${t.yamlCamComment}
+  - type: picture-entity
+    entity: ${cameraId}
+    name: ${t.yamlCamName}
+    show_state: false
+    camera_view: live
+
+  # ${t.yamlSenComment}
+  - type: markdown
+    content: >
+      ## ${t.yamlDetDetails}
+      
+      ${t.yamlTotal} {{ states('${sensorId}') }}
+      
+      ---
+      
+      {% set all_attrs = states.${sensorId}.attributes %}
+      
+      {% for key, value in all_attrs.items() %}
+        {% if key not in ['friendly_name', 'icon', 'total', 'timestamp', 'device_class', 'payload', 'stream_source'] %}
+        - **{{ key }}:** {{ value }}
+        {% endif %}
+      {% endfor %}
+`;
+        
+        if (!camInput && !senInput) {
+            document.getElementById('yamlOutput').textContent = t.outputEmpty;
+            return;
+        }
+
+        document.getElementById('yamlOutput').textContent = yamlTemplate;
+    }
+
+    function copyToClipboard() {
+        const t = i18n[currentLang];
+        const text = document.getElementById('yamlOutput').textContent;
+        
+        if (text === t.outputEmpty) {
+            alert(t.alertEmpty);
+            return;
+        }
+        
+        navigator.clipboard.writeText(text).then(() => {
+            alert(t.alertSuccess);
+        }).catch(err => {
+            alert(t.alertFail);
+        });
+    }
+
+    // Initialize default language
+    changeLanguage();
+</script>
+
+</body>
+</html>
